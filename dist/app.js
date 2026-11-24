@@ -530,12 +530,20 @@ let pushQueued = false;
 function setSyncStatus(text) {
     $("sync-status").textContent = text;
 }
+function setLoading(visible) {
+    const dialog = dlg("dlg-loading");
+    if (visible && !dialog.open)
+        dialog.showModal();
+    if (!visible && dialog.open)
+        dialog.close();
+}
 async function pushToSheet() {
     if (pushing) {
         pushQueued = true;
         return;
     }
     pushing = true;
+    setLoading(true);
     setSyncStatus("☁ Đang lưu lên Sheet…");
     try {
         await callScript("push", buildPushTabs());
@@ -547,6 +555,7 @@ async function pushToSheet() {
     }
     finally {
         pushing = false;
+        setLoading(false);
         if (pushQueued) {
             pushQueued = false;
             void pushToSheet();
@@ -957,7 +966,8 @@ $("form-settings").addEventListener("submit", async (e) => {
         status.textContent = describeError(err);
     }
 });
-document.querySelectorAll("dialog").forEach((d) => d.addEventListener("click", (e) => { if (e.target === d)
+dlg("dlg-loading").addEventListener("cancel", (e) => e.preventDefault());
+document.querySelectorAll("dialog").forEach((d) => d.addEventListener("click", (e) => { if (e.target === d && d.id !== "dlg-loading")
     d.close(); }));
 window.setInterval(() => {
     const active = document.activeElement;

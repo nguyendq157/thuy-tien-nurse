@@ -125,3 +125,8 @@ dialog code { background: var(--blue-soft); padding: 1px 6px; border-radius: 6px
 .med-row.med-lv-attention { border-left-color: var(--yellow-line); }
 .med-row.med-lv-high { border-left-color: var(--red-line); }
 .med-row .badge { font-size: 12px; padding: 2px 8px; margin-right: 4px; }
+
+.loading-dialog { width: min(230px, 94vw); text-align: center; padding: 24px 16px; }
+.loading-dialog p { margin: 14px 0 0; font-weight: 600; color: var(--blue-dark); }
+.spinner { width: 44px; height: 44px; margin: 0 auto; border: 5px solid var(--blue-soft); border-top-color: var(--blue); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

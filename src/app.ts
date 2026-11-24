@@ -558,9 +558,17 @@ function setSyncStatus(text: string): void {
   $("sync-status").textContent = text;
 }
 
+/** Blocking loading dialog shown while data is being written to the Sheet. */
+function setLoading(visible: boolean): void {
+  const dialog = dlg("dlg-loading");
+  if (visible && !dialog.open) dialog.showModal();
+  if (!visible && dialog.open) dialog.close();
+}
+
 async function pushToSheet(): Promise<void> {
   if (pushing) { pushQueued = true; return; }
   pushing = true;
+  setLoading(true);
   setSyncStatus("☁ Đang lưu lên Sheet…");
   try {
     await callScript("push", buildPushTabs());
@@ -570,6 +578,7 @@ async function pushToSheet(): Promise<void> {
     toast(`Không lưu được lên Sheet: ${err instanceof Error ? err.message : String(err)}`);
   } finally {
     pushing = false;
+    setLoading(false);
     if (pushQueued) { pushQueued = false; void pushToSheet(); }
   }
 }
@@ -930,9 +939,12 @@ $("form-settings").addEventListener("submit", async (e) => {
   }
 });
 
+// The loading dialog cannot be dismissed with Esc while saving
+dlg("dlg-loading").addEventListener("cancel", (e) => e.preventDefault());
+
 // Close dialog when clicking the backdrop
 document.querySelectorAll("dialog").forEach((d) =>
-  d.addEventListener("click", (e) => { if (e.target === d) d.close(); })
+  d.addEventListener("click", (e) => { if (e.target === d && d.id !== "dlg-loading") d.close(); })
 );
 
 // Refresh status highlights (soon / late) every 30 seconds without disturbing text inputs
