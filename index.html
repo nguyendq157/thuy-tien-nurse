@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chia ca điều dưỡng - Khoa Phục hồi chức năng</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">✚</span>
+      <div>
+        <h1>Khoa Phục hồi chức năng</h1>
+        <small>Chia ca &amp; phân công điều dưỡng</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="sync-status" class="sync-status"></span>
+      <button class="btn btn-ghost" data-action="open-nurses">👩‍⚕️ Điều dưỡng</button>
+      <button class="btn btn-ghost" data-action="open-settings">📄 Google Sheet</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab" data-action="tab" data-tab="shifts">Ca trực</button>
+    <button class="tab" data-action="tab" data-tab="patients">Bệnh nhân</button>
+    <button class="tab" data-action="tab" data-tab="meds">Thuốc &amp; y lệnh</button>
+  </nav>
+
+  <main id="view"></main>
+
+  <!-- Patient dialog -->
+  <dialog id="dlg-patient">
+    <form id="form-patient">
+      <h2 id="dlg-patient-title">Thẻ bệnh nhân</h2>
+      <label>Số giường / Phòng <input name="bed" required placeholder="VD: P101-G1" /></label>
+      <label>Tên / Mã bệnh nhân <input name="name" required placeholder="VD: Nguyễn Văn A" /></label>
+      <label>Mức độ theo dõi
+        <select name="level">
+          <option value="normal">Bình thường</option>
+          <option value="attention">Cần chú ý</option>
+          <option value="high">Ưu tiên cao</option>
+        </select>
+      </label>
+      <label>Điều dưỡng phụ trách <select name="nurseId"></select></label>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">Hủy</button>
+        <button type="submit" class="btn btn-primary">Lưu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Medication dialog -->
+  <dialog id="dlg-med">
+    <form id="form-med">
+      <h2 id="dlg-med-title">Cữ thuốc / y lệnh</h2>
+      <label>Bệnh nhân <select name="patientId" required></select></label>
+      <label>Giờ <input name="time" type="time" required /></label>
+      <label>Tên thuốc / y lệnh <input name="drug" required placeholder="VD: Paracetamol" /></label>
+      <label>Liều dùng <input name="dose" placeholder="VD: 500mg, uống" /></label>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">Hủy</button>
+        <button type="submit" class="btn btn-primary">Lưu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Nurses dialog -->
+  <dialog id="dlg-nurses">
+    <h2>Danh sách điều dưỡng</h2>
+    <div id="nurse-list"></div>
+    <form id="form-nurse" class="inline-form">
+      <input name="name" required placeholder="Tên điều dưỡng mới" />
+      <button type="submit" class="btn btn-primary">Thêm</button>
+    </form>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost" data-action="close-dialog">Đóng</button>
+    </div>
+  </dialog>
+
+  <!-- Settings dialog -->
+  <dialog id="dlg-settings">
+    <form id="form-settings">
+      <h2>Đồng bộ Google Sheet</h2>
+      <p class="hint">
+        Các tab: <b>DieuDuong</b> (ten), <b>BenhNhan</b> (giuong, ten, muc_do, dieu_duong),
+        <b>Thuoc</b> (giuong, gio, thuoc, lieu), <b>Ca</b> (ngay, ca, dieu_duong, ghi_chu).
+      </p>
+      <p class="hint"><b>Đọc + ghi (khuyến nghị):</b> điền URL Apps Script và mật khẩu. Mỗi lần mở app sẽ tải dữ liệu mới nhất, mọi thay đổi tự lưu lên Sheet. Xem hướng dẫn trong <code>apps-script/README.md</code>.</p>
+      <label>URL Apps Script (kết thúc bằng /exec) <input name="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" /></label>
+      <label>Mật khẩu (SECRET_TOKEN) <input name="scriptToken" type="password" autocomplete="off" /></label>
+      <p class="hint"><b>Chỉ đọc:</b> nếu không dùng Apps Script, dán link "Xuất bản lên web".</p>
+      <label>Link Google Sheet đã xuất bản <input name="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pubhtml" /></label>
+      <p id="settings-status" class="hint"></p>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-action="reset-sample">Về dữ liệu mẫu</button>
+        <button type="button" class="btn btn-ghost" data-action="push-sheet">⬆ Lưu lên Sheet</button>
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">Đóng</button>
+        <button type="submit" class="btn btn-primary">⬇ Tải dữ liệu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirm-before-save dialog -->
+  <dialog id="dlg-confirm">
+    <form method="dialog">
+      <h2 id="confirm-title">Xác nhận</h2>
+      <ul id="confirm-lines" class="confirm-lines"></ul>
+      <div class="dlg-actions">
+        <button type="submit" value="cancel" class="btn btn-ghost">Không, quay lại chỉnh sửa</button>
+        <button type="submit" value="ok" id="confirm-ok" class="btn btn-primary">Đồng ý</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="footer">Copyright © 2026 Duong Thuy Tien</footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="dist/app.js"></script>
+</body>
+</html>
